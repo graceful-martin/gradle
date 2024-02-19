@@ -59,9 +59,11 @@ import javax.lang.model.SourceVersion;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.gradle.buildinit.plugins.internal.PackageNameBuilder.toPackageName;
 
 /**
  * Generates a Gradle project structure.
@@ -284,7 +286,7 @@ public abstract class InitBuild extends DefaultTask {
 
         BuildInitTestFramework testFramework = getBuildInitTestFramework(userQuestions, initializer, modularizationOption);
 
-        String packageName = getEffectivePackageName(initializer);
+        String packageName = getEffectivePackageName(userQuestions, initializer);
 
         validatePackageName(packageName);
 
@@ -435,9 +437,13 @@ public abstract class InitBuild extends DefaultTask {
     }
 
     @VisibleForTesting
-    String getEffectivePackageName(BuildInitializer initializer) {
+    String getEffectivePackageName(UserQuestions userQuestions, BuildInitializer initializer) {
         String packageName = this.packageName;
         if (initializer.supportsPackage()) {
+            if (isNullOrEmpty(packageName)) {
+                return userQuestions.askQuestion("Source package", toPackageName(projectName).toLowerCase(Locale.US));
+            }
+
             if (packageName == null) {
                 return getProviderFactory().gradleProperty(SOURCE_PACKAGE_PROPERTY).getOrElse(SOURCE_PACKAGE_DEFAULT);
             }
